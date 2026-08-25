@@ -1,20 +1,67 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-export default function App() {
+import { AuthProvider } from './src/contexts/AuthContext';
+import { useAuth } from './src/hooks/useAuth';
+
+import { LoginScreen } from './src/screens/LoginScreen';
+import { RegisterScreen } from './src/screens/RegisterScreen';
+import { UsersScreen } from './src/screens/UsersScreen';
+
+import { Loading } from './src/components/Loading';
+
+import { RootStackParamList } from './src/types/navigation';
+
+const Stack =
+  createNativeStackNavigator<RootStackParamList>();
+
+function Routes() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <Loading />;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        {user ? (
+          <Stack.Screen
+            name="Users"
+            component={UsersScreen}
+            options={{
+              title: 'Contatos',
+              headerBackVisible: false,
+            }}
+          />
+        ) : (
+          <>
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{
+                headerShown: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="Register"
+              component={RegisterScreen}
+              options={{
+                title: 'Cadastro',
+              }}
+            />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  return (
+    <AuthProvider>
+      <Routes />
+    </AuthProvider>
+  );
+}
