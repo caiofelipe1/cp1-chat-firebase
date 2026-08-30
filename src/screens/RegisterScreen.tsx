@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import {
     ActivityIndicator,
     Pressable,
@@ -8,29 +9,49 @@ import {
     View,
 } from 'react-native';
 
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+    NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 
-import { RootStackParamList } from '../types/navigation';
+import {
+    RootStackParamList,
+} from '../types/navigation';
+
 import {
     getAuthErrorMessage,
     registerWithEmailAndPassword,
 } from '../services/authService';
 
-type Props = NativeStackScreenProps<
-    RootStackParamList,
-    'Register'
->;
+import { useAuth } from '../hooks/useAuth';
+
+type Props =
+    NativeStackScreenProps<
+        RootStackParamList,
+        'Register'
+    >;
 
 export function RegisterScreen({
     navigation,
 }: Props) {
-    const [name, setName] = useState<string>('');
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const [confirmPassword, setConfirmPassword] =
+    const { refreshUser } = useAuth();
+
+    const [name, setName] =
         useState<string>('');
 
-    const [error, setError] = useState<string>('');
+    const [email, setEmail] =
+        useState<string>('');
+
+    const [password, setPassword] =
+        useState<string>('');
+
+    const [
+        confirmPassword,
+        setConfirmPassword,
+    ] = useState<string>('');
+
+    const [error, setError] =
+        useState<string>('');
+
     const [loading, setLoading] =
         useState<boolean>(false);
 
@@ -41,7 +62,10 @@ export function RegisterScreen({
             !password ||
             !confirmPassword
         ) {
-            setError('Preencha todos os campos.');
+            setError(
+                'Preencha todos os campos.'
+            );
+
             return;
         }
 
@@ -49,11 +73,17 @@ export function RegisterScreen({
             setError(
                 'A senha precisa ter pelo menos 6 caracteres.'
             );
+
             return;
         }
 
-        if (password !== confirmPassword) {
-            setError('As senhas não são iguais.');
+        if (
+            password !== confirmPassword
+        ) {
+            setError(
+                'As senhas não são iguais.'
+            );
+
             return;
         }
 
@@ -66,9 +96,13 @@ export function RegisterScreen({
                 email,
                 password
             );
+
+            await refreshUser();
         } catch (registerError) {
             setError(
-                getAuthErrorMessage(registerError)
+                getAuthErrorMessage(
+                    registerError
+                )
             );
         } finally {
             setLoading(false);
@@ -86,6 +120,7 @@ export function RegisterScreen({
                 placeholder="Nome"
                 value={name}
                 onChangeText={setName}
+                editable={!loading}
             />
 
             <TextInput
@@ -95,6 +130,7 @@ export function RegisterScreen({
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
+                editable={!loading}
             />
 
             <TextInput
@@ -103,6 +139,7 @@ export function RegisterScreen({
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                editable={!loading}
             />
 
             <TextInput
@@ -110,29 +147,49 @@ export function RegisterScreen({
                 placeholder="Confirmar senha"
                 secureTextEntry
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={
+                    setConfirmPassword
+                }
+                editable={!loading}
             />
 
             {error ? (
-                <Text style={styles.error}>{error}</Text>
+                <Text style={styles.error}>
+                    {error}
+                </Text>
             ) : null}
 
             <Pressable
-                style={styles.button}
-                onPress={handleRegister}
+                style={[
+                    styles.button,
+                    loading &&
+                        styles.disabledButton,
+                ]}
+                onPress={() => {
+                    void handleRegister();
+                }}
                 disabled={loading}
             >
                 {loading ? (
-                    <ActivityIndicator />
+                    <ActivityIndicator
+                        color="#ffffff"
+                    />
                 ) : (
-                    <Text style={styles.buttonText}>
+                    <Text
+                        style={
+                            styles.buttonText
+                        }
+                    >
                         Criar conta
                     </Text>
                 )}
             </Pressable>
 
             <Pressable
-                onPress={() => navigation.goBack()}
+                onPress={() =>
+                    navigation.goBack()
+                }
+                disabled={loading}
             >
                 <Text style={styles.back}>
                     Já possui conta? Entrar
@@ -172,6 +229,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
+    disabledButton: {
+        opacity: 0.5,
+    },
+
     buttonText: {
         color: '#ffffff',
         fontWeight: 'bold',
@@ -179,6 +240,7 @@ const styles = StyleSheet.create({
 
     error: {
         color: '#b00020',
+        textAlign: 'center',
     },
 
     back: {
