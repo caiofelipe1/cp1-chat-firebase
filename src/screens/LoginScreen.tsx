@@ -1,6 +1,8 @@
 import { useState } from 'react';
+
 import {
     ActivityIndicator,
+    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -8,29 +10,54 @@ import {
     View,
 } from 'react-native';
 
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+    NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 
-import { RootStackParamList } from '../types/navigation';
+import {
+    RootStackParamList,
+} from '../types/navigation';
+
 import {
     getAuthErrorMessage,
     loginWithEmailAndPassword,
+    loginWithGoogle,
 } from '../services/authService';
 
-type Props = NativeStackScreenProps<
-    RootStackParamList,
-    'Login'
->;
+import { useAuth } from '../hooks/useAuth';
 
-export function LoginScreen({ navigation }: Props) {
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
+type Props =
+    NativeStackScreenProps<
+        RootStackParamList,
+        'Login'
+    >;
 
-    const [error, setError] = useState<string>('');
-    const [loading, setLoading] = useState<boolean>(false);
+export function LoginScreen({
+    navigation,
+}: Props) {
+    const { refreshUser } = useAuth();
+
+    const [email, setEmail] =
+        useState<string>('');
+
+    const [password, setPassword] =
+        useState<string>('');
+
+    const [error, setError] =
+        useState<string>('');
+
+    const [loading, setLoading] =
+        useState<boolean>(false);
+
+    const [providerLoading, setProviderLoading] =
+        useState<boolean>(false);
 
     async function handleLogin(): Promise<void> {
         if (!email.trim() || !password) {
-            setError('Preencha o e-mail e a senha.');
+            setError(
+                'Preencha o e-mail e a senha.'
+            );
+
             return;
         }
 
@@ -42,16 +69,54 @@ export function LoginScreen({ navigation }: Props) {
                 email,
                 password
             );
+
+            await refreshUser();
         } catch (loginError) {
-            setError(getAuthErrorMessage(loginError));
+            setError(
+                getAuthErrorMessage(
+                    loginError
+                )
+            );
         } finally {
             setLoading(false);
         }
     }
 
+    async function handleGoogleLogin(): Promise<void> {
+        if (Platform.OS !== 'web') {
+            setError(
+                'O login Google mobile será configurado na próxima etapa.'
+            );
+
+            return;
+        }
+
+        try {
+            setProviderLoading(true);
+            setError('');
+
+            await loginWithGoogle();
+
+            await refreshUser();
+        } catch (googleError) {
+            setError(
+                getAuthErrorMessage(
+                    googleError
+                )
+            );
+        } finally {
+            setProviderLoading(false);
+        }
+    }
+
+    const authenticationInProgress =
+        loading || providerLoading;
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Chat Firebase</Text>
+            <Text style={styles.title}>
+                Chat Firebase
+            </Text>
 
             <Text style={styles.subtitle}>
                 Entre na sua conta
@@ -64,6 +129,9 @@ export function LoginScreen({ navigation }: Props) {
                 keyboardType="email-address"
                 value={email}
                 onChangeText={setEmail}
+                editable={
+                    !authenticationInProgress
+                }
             />
 
             <TextInput
@@ -72,21 +140,40 @@ export function LoginScreen({ navigation }: Props) {
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                editable={
+                    !authenticationInProgress
+                }
             />
 
             {error ? (
-                <Text style={styles.error}>{error}</Text>
+                <Text style={styles.error}>
+                    {error}
+                </Text>
             ) : null}
 
             <Pressable
-                style={styles.button}
-                onPress={handleLogin}
-                disabled={loading}
+                style={[
+                    styles.button,
+                    authenticationInProgress &&
+                        styles.disabledButton,
+                ]}
+                onPress={() => {
+                    void handleLogin();
+                }}
+                disabled={
+                    authenticationInProgress
+                }
             >
                 {loading ? (
-                    <ActivityIndicator />
+                    <ActivityIndicator
+                        color="#ffffff"
+                    />
                 ) : (
-                    <Text style={styles.buttonText}>
+                    <Text
+                        style={
+                            styles.buttonText
+                        }
+                    >
                         Entrar
                     </Text>
                 )}
@@ -94,11 +181,17 @@ export function LoginScreen({ navigation }: Props) {
 
             <Pressable
                 onPress={() =>
-                    navigation.navigate('Register')
+                    navigation.navigate(
+                        'Register'
+                    )
+                }
+                disabled={
+                    authenticationInProgress
                 }
             >
                 <Text style={styles.register}>
-                    Ainda não possui conta? Cadastre-se
+                    Ainda não possui conta?
+                    Cadastre-se
                 </Text>
             </Pressable>
 
@@ -107,17 +200,37 @@ export function LoginScreen({ navigation }: Props) {
             </View>
 
             <Pressable
-                style={styles.providerButton}
-                disabled
+                style={[
+                    styles.providerButton,
+                    authenticationInProgress &&
+                        styles.disabledButton,
+                ]}
+                disabled={
+                    authenticationInProgress
+                }
+                onPress={() => {
+                    void handleGoogleLogin();
+                }}
             >
-                <Text>Entrar com Google</Text>
+                {providerLoading ? (
+                    <ActivityIndicator />
+                ) : (
+                    <Text>
+                        Entrar com Google
+                    </Text>
+                )}
             </Pressable>
 
             <Pressable
-                style={styles.providerButton}
+                style={[
+                    styles.providerButton,
+                    styles.unavailableProvider,
+                ]}
                 disabled
             >
-                <Text>Entrar com Apple</Text>
+                <Text>
+                    Entrar com Apple
+                </Text>
             </Pressable>
         </View>
     );
@@ -170,6 +283,7 @@ const styles = StyleSheet.create({
 
     error: {
         color: '#b00020',
+        textAlign: 'center',
     },
 
     divider: {
@@ -183,6 +297,13 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 10,
         alignItems: 'center',
+    },
+
+    unavailableProvider: {
+        opacity: 0.5,
+    },
+
+    disabledButton: {
         opacity: 0.5,
     },
 });
