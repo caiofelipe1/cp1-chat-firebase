@@ -1,22 +1,53 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  NavigationContainer,
+} from '@react-navigation/native';
 
-import { AuthProvider } from './src/contexts/AuthContext';
-import { useAuth } from './src/hooks/useAuth';
+import {
+  createNativeStackNavigator,
+} from '@react-navigation/native-stack';
 
-import { LoginScreen } from './src/screens/LoginScreen';
-import { RegisterScreen } from './src/screens/RegisterScreen';
-import { UsersScreen } from './src/screens/UsersScreen';
+import {
+  AuthProvider,
+} from './src/contexts/AuthContext';
 
-import { Loading } from './src/components/Loading';
+import {
+  useAuth,
+} from './src/hooks/useAuth';
 
-import { RootStackParamList } from './src/types/navigation';
+import {
+  LoginScreen,
+} from './src/screens/LoginScreen';
+
+import {
+  RegisterScreen,
+} from './src/screens/RegisterScreen';
+
+import {
+  UsersScreen,
+} from './src/screens/UsersScreen';
+
+import {
+  ChatScreen,
+} from './src/screens/ChatScreen';
+
+import {
+  Loading,
+} from './src/components/Loading';
+
+import {
+  RootStackParamList,
+} from './src/types/navigation';
 
 const Stack =
-  createNativeStackNavigator<RootStackParamList>();
+  createNativeStackNavigator<
+    RootStackParamList
+  >();
 
 function Routes() {
-  const { user, loading } = useAuth();
+  const {
+    user,
+    loading,
+  } = useAuth();
 
   if (loading) {
     return <Loading />;
@@ -26,14 +57,26 @@ function Routes() {
     <NavigationContainer>
       <Stack.Navigator>
         {user ? (
-          <Stack.Screen
-            name="Users"
-            component={UsersScreen}
-            options={{
-              title: 'Contatos',
-              headerBackVisible: false,
-            }}
-          />
+          <>
+            <Stack.Screen
+              name="Users"
+              component={UsersScreen}
+              options={{
+                title: 'Contatos',
+                headerBackVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
+              options={({ route }) => ({
+                title:
+                  route.params
+                    .participantName,
+              })}
+            />
+          </>
         ) : (
           <>
             <Stack.Screen
@@ -46,7 +89,9 @@ function Routes() {
 
             <Stack.Screen
               name="Register"
-              component={RegisterScreen}
+              component={
+                RegisterScreen
+              }
               options={{
                 title: 'Cadastro',
               }}
