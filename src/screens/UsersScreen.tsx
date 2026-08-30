@@ -1,45 +1,153 @@
 import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from 'react';
+
+import {
+    FlatList,
     Pressable,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
 
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
 import { useAuth } from '../hooks/useAuth';
 
-export function UsersScreen() {
+import { getAllUsers } from '../services/userService';
+
+import { ChatUser } from '../types/user';
+import { RootStackParamList } from '../types/navigation';
+
+import { canUsersChat } from '../utils/chatRules';
+
+import { Loading } from '../components/Loading';
+import { ErrorMessage } from '../components/ErrorMessage';
+import { UserItem } from '../components/UserItem';
+
+type Props = NativeStackScreenProps<
+    RootStackParamList,
+    'Users'
+>;
+
+export function UsersScreen({
+    navigation,
+}: Props) {
     const { user, logout } = useAuth();
+
+    const [users, setUsers] =
+        useState<ChatUser[]>([]);
+
+    const [loading, setLoading] =
+        useState<boolean>(true);
+
+    const [error, setError] =
+        useState<string>('');
+
+    const loadUsers =
+        useCallback(async (): Promise<void> => {
+            try {
+                setLoading(true);
+                setError('');
+
+                const databaseUsers =
+                    await getAllUsers();
+
+                setUsers(databaseUsers);
+            } catch {
+                setError(
+                    'Não foi possível carregar os contatos.'
+                );
+            } finally {
+                setLoading(false);
+            }
+        }, []);
+
+    useEffect(() => {
+        void loadUsers();
+    }, [loadUsers]);
+
+    const compatibleUsers = useMemo(() => {
+        if (!user) {
+            return [];
+        }
+
+        return users.filter((candidate) =>
+            canUsersChat(user, candidate)
+        );
+    }, [user, users]);
+
+    const handleUserPress = useCallback(
+        (selectedUser: ChatUser): void => {
+            navigation.navigate('Chat', {
+                participantId: selectedUser.uid,
+                participantName: selectedUser.name,
+            });
+        },
+        [navigation]
+    );
+
+    if (loading) {
+        return <Loading />;
+    }
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>
-                Login realizado!
-            </Text>
+            <View style={styles.header}>
+                <View>
+                    <Text style={styles.title}>
+                        Contatos
+                    </Text>
 
-            <Text>
-                Nome: {user?.name}
-            </Text>
+                    <Text style={styles.subtitle}>
+                        Olá, {user?.name}
+                    </Text>
+                </View>
 
-            <Text>
-                E-mail: {user?.email}
-            </Text>
+                <Pressable
+                    style={styles.logoutButton}
+                    onPress={logout}
+                >
+                    <Text style={styles.logoutText}>
+                        Sair
+                    </Text>
+                </Pressable>
+            </View>
 
-            <Text>
-                Provider: {user?.provider}
-            </Text>
+            {error ? (
+                <ErrorMessage message={error} />
+            ) : null}
 
-            <Text>
-                UID: {user?.uid}
-            </Text>
+            <FlatList
+                data={compatibleUsers}
+                keyExtractor={(item) => item.uid}
+                renderItem={({ item }) => (
+                    <UserItem
+                        user={item}
+                        onPress={handleUserPress}
+                    />
+                )}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyTitle}>
+                            Nenhum contato disponível
+                        </Text>
 
-            <Pressable
-                style={styles.button}
-                onPress={logout}
-            >
-                <Text style={styles.buttonText}>
-                    Sair
-                </Text>
-            </Pressable>
+                        <Text style={styles.emptyText}>
+                            Não existem usuários compatíveis
+                            com seu tipo de autenticação.
+                        </Text>
+                    </View>
+                }
+                contentContainerStyle={
+                    compatibleUsers.length === 0
+                        ? styles.emptyList
+                        : undefined
+                }
+            />
         </View>
     );
 }
@@ -47,9 +155,14 @@ export function UsersScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        padding: 24,
-        gap: 12,
+        padding: 20,
+    },
+
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
     },
 
     title: {
@@ -57,16 +170,42 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 
-    button: {
-        marginTop: 20,
-        backgroundColor: '#111111',
-        padding: 14,
-        borderRadius: 10,
-        alignItems: 'center',
+    subtitle: {
+        marginTop: 4,
+        color: '#666666',
     },
 
-    buttonText: {
+    logoutButton: {
+        backgroundColor: '#111111',
+        paddingVertical: 10,
+        paddingHorizontal: 18,
+        borderRadius: 8,
+    },
+
+    logoutText: {
         color: '#ffffff',
         fontWeight: 'bold',
+    },
+
+    emptyList: {
+        flexGrow: 1,
+    },
+
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+
+    emptyText: {
+        color: '#666666',
+        textAlign: 'center',
+        marginTop: 8,
     },
 });
