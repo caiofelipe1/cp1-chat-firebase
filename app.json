@@ -12,10 +12,13 @@
       "backgroundColor": "#ffffff"
     },
     "plugins": [
-      "react-native-nitro-google-signin"
+      "react-native-nitro-google-signin",
+      "expo-apple-authentication"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.caiofelipe1.cp1chatfirebase",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.cp1chatfirebase.app",

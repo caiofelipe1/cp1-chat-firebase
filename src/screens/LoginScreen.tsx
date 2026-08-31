@@ -26,6 +26,14 @@ import {
     loginWithGoogle,
 } from '../services/googleAuth';
 
+import {
+    loginWithApple,
+} from '../services/appleAuth';
+
+import {
+    AppleSignInButton,
+} from '../components/AppleSignInButton';
+
 import { useAuth } from '../hooks/useAuth';
 
 type Props =
@@ -53,8 +61,13 @@ export function LoginScreen({
         useState<boolean>(false);
 
     const [
-        providerLoading,
-        setProviderLoading,
+        googleLoading,
+        setGoogleLoading,
+    ] = useState<boolean>(false);
+
+    const [
+        appleLoading,
+        setAppleLoading,
     ] = useState<boolean>(false);
 
     async function handleLogin(): Promise<void> {
@@ -92,7 +105,7 @@ export function LoginScreen({
 
     async function handleGoogleLogin(): Promise<void> {
         try {
-            setProviderLoading(true);
+            setGoogleLoading(true);
             setError('');
 
             await loginWithGoogle();
@@ -105,13 +118,33 @@ export function LoginScreen({
                 )
             );
         } finally {
-            setProviderLoading(false);
+            setGoogleLoading(false);
+        }
+    }
+
+    async function handleAppleLogin(): Promise<void> {
+        try {
+            setAppleLoading(true);
+            setError('');
+
+            await loginWithApple();
+
+            await refreshUser();
+        } catch (appleError) {
+            setError(
+                getAuthErrorMessage(
+                    appleError
+                )
+            );
+        } finally {
+            setAppleLoading(false);
         }
     }
 
     const authenticationInProgress =
         loading ||
-        providerLoading;
+        googleLoading ||
+        appleLoading;
 
     return (
         <View style={styles.container}>
@@ -191,8 +224,7 @@ export function LoginScreen({
                 }
             >
                 <Text style={styles.register}>
-                    Ainda não possui conta?
-                    Cadastre-se
+                    Ainda não possui conta? Cadastre-se
                 </Text>
             </Pressable>
 
@@ -213,7 +245,7 @@ export function LoginScreen({
                     void handleGoogleLogin();
                 }}
             >
-                {providerLoading ? (
+                {googleLoading ? (
                     <ActivityIndicator />
                 ) : (
                     <Text>
@@ -222,17 +254,17 @@ export function LoginScreen({
                 )}
             </Pressable>
 
-            <Pressable
-                style={[
-                    styles.providerButton,
-                    styles.unavailableProvider,
-                ]}
-                disabled
-            >
-                <Text>
-                    Entrar com Apple
-                </Text>
-            </Pressable>
+            <AppleSignInButton
+                onPress={() => {
+                    void handleAppleLogin();
+                }}
+                disabled={
+                    authenticationInProgress
+                }
+                loading={
+                    appleLoading
+                }
+            />
         </View>
     );
 }
@@ -293,15 +325,13 @@ const styles = StyleSheet.create({
     },
 
     providerButton: {
+        minHeight: 48,
         borderWidth: 1,
         borderColor: '#cccccc',
         padding: 14,
         borderRadius: 10,
         alignItems: 'center',
-    },
-
-    unavailableProvider: {
-        opacity: 0.5,
+        justifyContent: 'center',
     },
 
     disabledButton: {
