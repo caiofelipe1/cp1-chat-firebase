@@ -6,16 +6,22 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
+    Pressable,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
 
 import {
+    SafeAreaView,
+} from 'react-native-safe-area-context';
+
+import {
     NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 
 import { useAuth } from '../hooks/useAuth';
+
 import { useChat } from '../hooks/useChat';
 
 import {
@@ -42,6 +48,10 @@ import {
     Loading,
 } from '../components/Loading';
 
+import {
+    colors,
+} from '../styles/theme';
+
 type Props =
     NativeStackScreenProps<
         RootStackParamList,
@@ -49,6 +59,7 @@ type Props =
     >;
 
 export function ChatScreen({
+    navigation,
     route,
 }: Props) {
     const {
@@ -56,7 +67,8 @@ export function ChatScreen({
         participantName,
     } = route.params;
 
-    const { user } = useAuth();
+    const { user } =
+        useAuth();
 
     const {
         messages,
@@ -78,119 +90,289 @@ export function ChatScreen({
     }
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={
-                Platform.OS === 'ios'
-                    ? 'padding'
-                    : undefined
-            }
-            keyboardVerticalOffset={90}
+        <SafeAreaView
+            style={styles.safeArea}
+            edges={[
+                'top',
+                'left',
+                'right',
+            ]}
         >
-            <View style={styles.chatHeader}>
-                <Text style={styles.name}>
-                    {participantName}
-                </Text>
-
-                <Text style={styles.status}>
-                    Conversa 1 para 1
-                </Text>
-            </View>
-
-            {error ? (
-                <ErrorMessage
-                    message={error}
-                />
-            ) : null}
-
-            <FlatList
-                ref={listReference}
-                data={messages}
-                keyExtractor={(
-                    item
-                ) => item.id}
-                renderItem={({
-                    item,
-                }) => (
-                    <ChatMessage
-                        message={item}
-                        isOwnMessage={
-                            item.senderId ===
-                            user?.uid
-                        }
-                    />
-                )}
-                contentContainerStyle={[
-                    styles.messagesContent,
-                    messages.length === 0 &&
-                        styles.emptyMessagesContent,
-                ]}
-                ListEmptyComponent={
-                    <View
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={
+                    Platform.OS === 'ios'
+                        ? 'padding'
+                        : undefined
+                }
+            >
+                <View
+                    style={
+                        styles.header
+                    }
+                >
+                    <Pressable
                         style={
-                            styles.emptyContainer
+                            styles.backButton
+                        }
+                        onPress={() =>
+                            navigation.goBack()
                         }
                     >
                         <Text
                             style={
-                                styles.emptyTitle
+                                styles.backIcon
                             }
                         >
-                            Nenhuma mensagem ainda
+                            ‹
+                        </Text>
+                    </Pressable>
+
+                    <View
+                        style={
+                            styles.avatar
+                        }
+                    >
+                        <Text
+                            style={
+                                styles.avatarText
+                            }
+                        >
+                            {participantName
+                                .trim()
+                                .slice(0, 1)
+                                .toUpperCase()}
+                        </Text>
+                    </View>
+
+                    <View
+                        style={
+                            styles.headerContent
+                        }
+                    >
+                        <Text
+                            style={
+                                styles.participantName
+                            }
+                            numberOfLines={1}
+                        >
+                            {
+                                participantName
+                            }
                         </Text>
 
                         <Text
                             style={
-                                styles.emptyText
+                                styles.status
                             }
                         >
-                            Envie a primeira
-                            mensagem para{' '}
-                            {participantName}.
+                            Conversa privada •
+                            1 para 1
                         </Text>
                     </View>
-                }
-                onContentSizeChange={() => {
-                    listReference.current
-                        ?.scrollToEnd({
-                            animated: true,
-                        });
-                }}
-            />
+                </View>
 
-            <ChatInput
-                onSend={sendMessage}
-                sending={sending}
-            />
-        </KeyboardAvoidingView>
+                {error ? (
+                    <View
+                        style={
+                            styles.errorWrapper
+                        }
+                    >
+                        <ErrorMessage
+                            message={
+                                error
+                            }
+                        />
+                    </View>
+                ) : null}
+
+                <FlatList
+                    ref={
+                        listReference
+                    }
+                    data={messages}
+                    keyExtractor={(
+                        item
+                    ) => item.id}
+                    renderItem={({
+                        item,
+                    }) => (
+                        <ChatMessage
+                            message={
+                                item
+                            }
+                            isOwnMessage={
+                                item.senderId ===
+                                user?.uid
+                            }
+                        />
+                    )}
+                    contentContainerStyle={[
+                        styles.messagesContent,
+
+                        messages.length ===
+                            0 &&
+                            styles.emptyMessagesContent,
+                    ]}
+                    showsVerticalScrollIndicator={
+                        false
+                    }
+                    ListEmptyComponent={
+                        <View
+                            style={
+                                styles.emptyContainer
+                            }
+                        >
+                            <View
+                                style={
+                                    styles.emptyAvatar
+                                }
+                            >
+                                <Text
+                                    style={
+                                        styles.emptyAvatarText
+                                    }
+                                >
+                                    {participantName
+                                        .trim()
+                                        .slice(
+                                            0,
+                                            1
+                                        )
+                                        .toUpperCase()}
+                                </Text>
+                            </View>
+
+                            <Text
+                                style={
+                                    styles.emptyTitle
+                                }
+                            >
+                                Comece a conversa
+                            </Text>
+
+                            <Text
+                                style={
+                                    styles.emptyText
+                                }
+                            >
+                                Envie a primeira
+                                mensagem para{' '}
+                                {
+                                    participantName
+                                }
+                                .
+                            </Text>
+                        </View>
+                    }
+                    onContentSizeChange={() => {
+                        listReference.current
+                            ?.scrollToEnd({
+                                animated:
+                                    true,
+                            });
+                    }}
+                />
+
+                <ChatInput
+                    onSend={
+                        sendMessage
+                    }
+                    sending={sending}
+                />
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor:
+            colors.surface,
+    },
+
     container: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor:
+            colors.background,
     },
 
-    chatHeader: {
-        padding: 16,
+    header: {
+        minHeight: 72,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor:
+            colors.surface,
         borderBottomWidth: 1,
-        borderBottomColor: '#eeeeee',
+        borderBottomColor:
+            colors.border,
+        paddingHorizontal: 14,
+        gap: 11,
     },
 
-    name: {
-        fontSize: 18,
-        fontWeight: 'bold',
+    backButton: {
+        width: 40,
+        height: 40,
+        justifyContent:
+            'center',
+        alignItems: 'center',
+    },
+
+    backIcon: {
+        color: colors.text,
+        fontSize: 38,
+        lineHeight: 38,
+        marginTop: -3,
+    },
+
+    avatar: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        backgroundColor:
+            colors.primary,
+        justifyContent:
+            'center',
+        alignItems: 'center',
+    },
+
+    avatarText: {
+        color: '#FFFFFF',
+        fontSize: 15,
+        fontWeight: '800',
+    },
+
+    headerContent: {
+        flex: 1,
+        minWidth: 0,
+    },
+
+    participantName: {
+        color: colors.text,
+        fontSize: 16,
+        fontWeight: '700',
     },
 
     status: {
-        marginTop: 2,
+        color:
+            colors.textSecondary,
         fontSize: 12,
-        color: '#777777',
+        marginTop: 2,
+    },
+
+    errorWrapper: {
+        backgroundColor:
+            colors.surface,
+        paddingHorizontal: 16,
     },
 
     messagesContent: {
-        paddingVertical: 12,
+        width: '100%',
+        maxWidth: 900,
+        alignSelf: 'center',
+        paddingTop: 12,
+        paddingBottom: 10,
     },
 
     emptyMessagesContent: {
@@ -199,19 +381,44 @@ const styles = StyleSheet.create({
 
     emptyContainer: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent:
+            'center',
         alignItems: 'center',
-        padding: 24,
+        padding: 30,
+    },
+
+    emptyAvatar: {
+        width: 62,
+        height: 62,
+        borderRadius: 20,
+        backgroundColor:
+            colors.surface,
+        borderWidth: 1,
+        borderColor:
+            colors.border,
+        justifyContent:
+            'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+
+    emptyAvatarText: {
+        color: colors.text,
+        fontSize: 22,
+        fontWeight: '800',
     },
 
     emptyTitle: {
+        color: colors.text,
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
 
     emptyText: {
-        marginTop: 8,
-        color: '#666666',
+        color:
+            colors.textSecondary,
+        fontSize: 14,
         textAlign: 'center',
+        marginTop: 7,
     },
 });

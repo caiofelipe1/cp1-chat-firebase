@@ -2,12 +2,19 @@ import { useState } from 'react';
 
 import {
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     View,
 } from 'react-native';
+
+import {
+    SafeAreaView,
+} from 'react-native-safe-area-context';
 
 import {
     NativeStackScreenProps,
@@ -24,6 +31,11 @@ import {
 
 import { useAuth } from '../hooks/useAuth';
 
+import {
+    colors,
+    radius,
+} from '../styles/theme';
+
 type Props =
     NativeStackScreenProps<
         RootStackParamList,
@@ -33,7 +45,8 @@ type Props =
 export function RegisterScreen({
     navigation,
 }: Props) {
-    const { refreshUser } = useAuth();
+    const { refreshUser } =
+        useAuth();
 
     const [name, setName] =
         useState<string>('');
@@ -110,141 +123,332 @@ export function RegisterScreen({
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>
-                Criar conta
-            </Text>
-
-            <TextInput
-                style={styles.input}
-                placeholder="Nome"
-                value={name}
-                onChangeText={setName}
-                editable={!loading}
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="E-mail"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                editable={!loading}
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Senha"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                editable={!loading}
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Confirmar senha"
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={
-                    setConfirmPassword
+        <SafeAreaView style={styles.safeArea}>
+            <KeyboardAvoidingView
+                style={styles.keyboardContainer}
+                behavior={
+                    Platform.OS === 'ios'
+                        ? 'padding'
+                        : undefined
                 }
-                editable={!loading}
-            />
-
-            {error ? (
-                <Text style={styles.error}>
-                    {error}
-                </Text>
-            ) : null}
-
-            <Pressable
-                style={[
-                    styles.button,
-                    loading &&
-                        styles.disabledButton,
-                ]}
-                onPress={() => {
-                    void handleRegister();
-                }}
-                disabled={loading}
             >
-                {loading ? (
-                    <ActivityIndicator
-                        color="#ffffff"
-                    />
-                ) : (
-                    <Text
-                        style={
-                            styles.buttonText
-                        }
-                    >
-                        Criar conta
-                    </Text>
-                )}
-            </Pressable>
+                <ScrollView
+                    contentContainerStyle={
+                        styles.scrollContent
+                    }
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={styles.content}>
+                        <View style={styles.header}>
+                            <View style={styles.logo}>
+                                <Text style={styles.logoText}>
+                                    C
+                                </Text>
+                            </View>
 
-            <Pressable
-                onPress={() =>
-                    navigation.goBack()
-                }
-                disabled={loading}
-            >
-                <Text style={styles.back}>
-                    Já possui conta? Entrar
-                </Text>
-            </Pressable>
-        </View>
+                            <Text style={styles.title}>
+                                Crie sua conta
+                            </Text>
+
+                            <Text style={styles.subtitle}>
+                                Preencha seus dados para
+                                começar a conversar.
+                            </Text>
+                        </View>
+
+                        <View style={styles.card}>
+                            <View>
+                                <Text style={styles.label}>
+                                    Nome
+                                </Text>
+
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Seu nome"
+                                    placeholderTextColor={
+                                        colors.textMuted
+                                    }
+                                    value={name}
+                                    onChangeText={setName}
+                                    editable={!loading}
+                                    autoCapitalize="words"
+                                />
+                            </View>
+
+                            <View>
+                                <Text style={styles.label}>
+                                    E-mail
+                                </Text>
+
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="seu@email.com"
+                                    placeholderTextColor={
+                                        colors.textMuted
+                                    }
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    editable={!loading}
+                                />
+                            </View>
+
+                            <View>
+                                <Text style={styles.label}>
+                                    Senha
+                                </Text>
+
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Mínimo de 6 caracteres"
+                                    placeholderTextColor={
+                                        colors.textMuted
+                                    }
+                                    secureTextEntry
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    editable={!loading}
+                                />
+                            </View>
+
+                            <View>
+                                <Text style={styles.label}>
+                                    Confirmar senha
+                                </Text>
+
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Digite novamente"
+                                    placeholderTextColor={
+                                        colors.textMuted
+                                    }
+                                    secureTextEntry
+                                    value={confirmPassword}
+                                    onChangeText={
+                                        setConfirmPassword
+                                    }
+                                    editable={!loading}
+                                    onSubmitEditing={() => {
+                                        void handleRegister();
+                                    }}
+                                />
+                            </View>
+
+                            {error ? (
+                                <View
+                                    style={
+                                        styles.errorContainer
+                                    }
+                                >
+                                    <Text
+                                        style={
+                                            styles.errorText
+                                        }
+                                    >
+                                        {error}
+                                    </Text>
+                                </View>
+                            ) : null}
+
+                            <Pressable
+                                style={({ pressed }) => [
+                                    styles.button,
+
+                                    pressed &&
+                                        styles.buttonPressed,
+
+                                    loading &&
+                                        styles.disabledButton,
+                                ]}
+                                onPress={() => {
+                                    void handleRegister();
+                                }}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator
+                                        color="#FFFFFF"
+                                    />
+                                ) : (
+                                    <Text
+                                        style={
+                                            styles.buttonText
+                                        }
+                                    >
+                                        Criar conta
+                                    </Text>
+                                )}
+                            </Pressable>
+
+                            <View style={styles.loginRow}>
+                                <Text
+                                    style={
+                                        styles.loginDescription
+                                    }
+                                >
+                                    Já possui uma conta?
+                                </Text>
+
+                                <Pressable
+                                    onPress={() =>
+                                        navigation.goBack()
+                                    }
+                                    disabled={loading}
+                                >
+                                    <Text
+                                        style={
+                                            styles.loginAction
+                                        }
+                                    >
+                                        Entrar
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
+        backgroundColor: colors.background,
+    },
+
+    keyboardContainer: {
+        flex: 1,
+    },
+
+    scrollContent: {
+        flexGrow: 1,
         justifyContent: 'center',
-        padding: 24,
-        gap: 12,
+        padding: 20,
+    },
+
+    content: {
+        width: '100%',
+        maxWidth: 480,
+        alignSelf: 'center',
+    },
+
+    header: {
+        alignItems: 'center',
+        marginBottom: 28,
+    },
+
+    logo: {
+        width: 54,
+        height: 54,
+        borderRadius: 17,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+
+    logoText: {
+        color: '#FFFFFF',
+        fontSize: 26,
+        fontWeight: '800',
     },
 
     title: {
+        color: colors.text,
         fontSize: 28,
-        fontWeight: 'bold',
+        fontWeight: '800',
         textAlign: 'center',
-        marginBottom: 20,
+    },
+
+    subtitle: {
+        color: colors.textSecondary,
+        fontSize: 15,
+        lineHeight: 22,
+        textAlign: 'center',
+        marginTop: 8,
+    },
+
+    card: {
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 20,
+        padding: 22,
+        gap: 16,
+    },
+
+    label: {
+        color: colors.text,
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 7,
     },
 
     input: {
+        minHeight: 50,
+        backgroundColor: colors.inputBackground,
         borderWidth: 1,
-        borderColor: '#cccccc',
-        borderRadius: 10,
+        borderColor: colors.border,
+        borderRadius: radius.medium,
         paddingHorizontal: 14,
-        paddingVertical: 12,
+        color: colors.text,
+        fontSize: 16,
+    },
+
+    errorContainer: {
+        backgroundColor: colors.errorBackground,
+        borderRadius: radius.medium,
+        paddingHorizontal: 14,
+        paddingVertical: 11,
+    },
+
+    errorText: {
+        color: colors.error,
+        fontSize: 14,
+        textAlign: 'center',
     },
 
     button: {
-        backgroundColor: '#111111',
-        padding: 14,
-        borderRadius: 10,
+        minHeight: 50,
+        backgroundColor: colors.primary,
+        borderRadius: radius.medium,
+        justifyContent: 'center',
         alignItems: 'center',
     },
 
+    buttonPressed: {
+        backgroundColor: colors.primaryPressed,
+    },
+
     disabledButton: {
-        opacity: 0.5,
+        opacity: 0.55,
     },
 
     buttonText: {
-        color: '#ffffff',
-        fontWeight: 'bold',
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '700',
     },
 
-    error: {
-        color: '#b00020',
-        textAlign: 'center',
+    loginRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 5,
     },
 
-    back: {
-        textAlign: 'center',
-        marginTop: 8,
+    loginDescription: {
+        color: colors.textSecondary,
+        fontSize: 14,
+    },
+
+    loginAction: {
+        color: colors.primary,
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

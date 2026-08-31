@@ -8,6 +8,11 @@ import {
     ChatMessage as ChatMessageType,
 } from '../types/chat';
 
+import {
+    colors,
+    radius,
+} from '../styles/theme';
+
 interface ChatMessageProps {
     message: ChatMessageType;
     isOwnMessage: boolean;
@@ -16,17 +21,15 @@ interface ChatMessageProps {
 function formatTime(
     timestamp: number
 ): string {
-    const date = new Date(timestamp);
-
-    const hours = String(
-        date.getHours()
-    ).padStart(2, '0');
-
-    const minutes = String(
-        date.getMinutes()
-    ).padStart(2, '0');
-
-    return `${hours}:${minutes}`;
+    return new Date(
+        timestamp
+    ).toLocaleTimeString(
+        'pt-BR',
+        {
+            hour: '2-digit',
+            minute: '2-digit',
+        }
+    );
 }
 
 export function ChatMessage({
@@ -36,15 +39,17 @@ export function ChatMessage({
     return (
         <View
             style={[
-                styles.container,
+                styles.row,
+
                 isOwnMessage
-                    ? styles.ownContainer
-                    : styles.receivedContainer,
+                    ? styles.ownRow
+                    : styles.receivedRow,
             ]}
         >
             <View
                 style={[
                     styles.bubble,
+
                     isOwnMessage
                         ? styles.ownBubble
                         : styles.receivedBubble,
@@ -52,9 +57,11 @@ export function ChatMessage({
             >
                 <Text
                     style={[
-                        styles.message,
-                        isOwnMessage &&
-                            styles.ownMessage,
+                        styles.text,
+
+                        isOwnMessage
+                            ? styles.ownText
+                            : styles.receivedText,
                     ]}
                 >
                     {message.text}
@@ -63,8 +70,10 @@ export function ChatMessage({
                 <Text
                     style={[
                         styles.time,
-                        isOwnMessage &&
-                            styles.ownTime,
+
+                        isOwnMessage
+                            ? styles.ownTime
+                            : styles.receivedTime,
                     ]}
                 >
                     {formatTime(
@@ -77,51 +86,71 @@ export function ChatMessage({
 }
 
 const styles = StyleSheet.create({
-    container: {
-        marginVertical: 4,
+    row: {
+        width: '100%',
         paddingHorizontal: 16,
+        marginVertical: 4,
     },
 
-    ownContainer: {
-        alignItems: 'flex-end',
+    ownRow: {
+        alignItems:
+            'flex-end',
     },
 
-    receivedContainer: {
-        alignItems: 'flex-start',
+    receivedRow: {
+        alignItems:
+            'flex-start',
     },
 
     bubble: {
-        maxWidth: '80%',
+        maxWidth: '78%',
+        minWidth: 64,
         paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 14,
+        paddingTop: 10,
+        paddingBottom: 8,
     },
 
     ownBubble: {
-        backgroundColor: '#111111',
+        backgroundColor:
+            colors.sentMessage,
+        borderRadius:
+            radius.large,
+        borderBottomRightRadius: 5,
     },
 
     receivedBubble: {
-        backgroundColor: '#e6e6e6',
+        backgroundColor:
+            colors.receivedMessage,
+        borderRadius:
+            radius.large,
+        borderBottomLeftRadius: 5,
     },
 
-    message: {
-        fontSize: 16,
-        color: '#111111',
+    text: {
+        fontSize: 15,
+        lineHeight: 21,
     },
 
-    ownMessage: {
-        color: '#ffffff',
+    ownText: {
+        color: '#FFFFFF',
+    },
+
+    receivedText: {
+        color: colors.text,
     },
 
     time: {
-        fontSize: 11,
-        color: '#666666',
-        marginTop: 4,
+        fontSize: 10,
+        marginTop: 5,
         alignSelf: 'flex-end',
     },
 
     ownTime: {
-        color: '#cccccc',
+        color: '#CBD5E1',
+    },
+
+    receivedTime: {
+        color:
+            colors.textSecondary,
     },
 });
