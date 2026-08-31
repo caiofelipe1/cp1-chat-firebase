@@ -2,9 +2,7 @@ import { FirebaseError } from 'firebase/app';
 
 import {
     createUserWithEmailAndPassword,
-    GoogleAuthProvider,
     signInWithEmailAndPassword,
-    signInWithPopup,
     signOut,
     updateProfile,
 } from 'firebase/auth';
@@ -26,9 +24,13 @@ export async function registerWithEmailAndPassword(
             password
         );
 
-    await updateProfile(credential.user, {
-        displayName: name.trim(),
-    });
+    await updateProfile(
+        credential.user,
+        {
+            displayName:
+                name.trim(),
+        }
+    );
 
     const user: ChatUser = {
         uid: credential.user.uid,
@@ -53,42 +55,6 @@ export async function loginWithEmailAndPassword(
     );
 }
 
-export async function loginWithGoogle(): Promise<ChatUser> {
-    const provider =
-        new GoogleAuthProvider();
-
-    provider.setCustomParameters({
-        prompt: 'select_account',
-    });
-
-    const credential =
-        await signInWithPopup(
-            auth,
-            provider
-        );
-
-    const firebaseUser =
-        credential.user;
-
-    const fallbackName =
-        firebaseUser.email
-            ?.split('@')[0] ??
-        'Usuário Google';
-
-    const user: ChatUser = {
-        uid: firebaseUser.uid,
-        name:
-            firebaseUser.displayName?.trim() ||
-            fallbackName,
-        email: firebaseUser.email,
-        provider: 'google',
-    };
-
-    await saveUser(user);
-
-    return user;
-}
-
 export async function logout(): Promise<void> {
     await signOut(auth);
 }
@@ -96,6 +62,13 @@ export async function logout(): Promise<void> {
 export function getAuthErrorMessage(
     error: unknown
 ): string {
+    if (
+        error instanceof Error &&
+        !(error instanceof FirebaseError)
+    ) {
+        return error.message;
+    }
+
     if (!(error instanceof FirebaseError)) {
         return 'Ocorreu um erro inesperado.';
     }

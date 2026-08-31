@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import {
     ActivityIndicator,
-    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -21,8 +20,11 @@ import {
 import {
     getAuthErrorMessage,
     loginWithEmailAndPassword,
-    loginWithGoogle,
 } from '../services/authService';
+
+import {
+    loginWithGoogle,
+} from '../services/googleAuth';
 
 import { useAuth } from '../hooks/useAuth';
 
@@ -35,7 +37,8 @@ type Props =
 export function LoginScreen({
     navigation,
 }: Props) {
-    const { refreshUser } = useAuth();
+    const { refreshUser } =
+        useAuth();
 
     const [email, setEmail] =
         useState<string>('');
@@ -49,11 +52,16 @@ export function LoginScreen({
     const [loading, setLoading] =
         useState<boolean>(false);
 
-    const [providerLoading, setProviderLoading] =
-        useState<boolean>(false);
+    const [
+        providerLoading,
+        setProviderLoading,
+    ] = useState<boolean>(false);
 
     async function handleLogin(): Promise<void> {
-        if (!email.trim() || !password) {
+        if (
+            !email.trim() ||
+            !password
+        ) {
             setError(
                 'Preencha o e-mail e a senha.'
             );
@@ -83,14 +91,6 @@ export function LoginScreen({
     }
 
     async function handleGoogleLogin(): Promise<void> {
-        if (Platform.OS !== 'web') {
-            setError(
-                'O login Google mobile será configurado na próxima etapa.'
-            );
-
-            return;
-        }
-
         try {
             setProviderLoading(true);
             setError('');
@@ -110,7 +110,8 @@ export function LoginScreen({
     }
 
     const authenticationInProgress =
-        loading || providerLoading;
+        loading ||
+        providerLoading;
 
     return (
         <View style={styles.container}>
